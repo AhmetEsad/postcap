@@ -88,4 +88,12 @@ Package a local DMG:
 script/package_dmg.sh
 ```
 
-This creates `dist/Postcap.dmg`. The script uses ad hoc signing (`codesign --sign -`) and does not notarize the app. Users may need to approve the first launch from **System Settings > Privacy & Security**. For a fully trusted download without that warning, sign with an Apple Developer ID certificate and notarize the DMG with Apple.
+This creates `dist/Postcap.dmg`.
+
+Note: The script uses ad hoc signing (`codesign --sign -`) and does not notarize the app.
+
+## License
+
+Postcap is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+Postcap does not bundle ffmpeg or ffprobe. They are external dependencies and are licensed separately by their respective projects.
