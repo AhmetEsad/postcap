@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build DMG
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Build and package DMG
+        run: script/package_dmg.sh
+
+      - name: Rename artifact
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          mv dist/Postcap.dmg "dist/Postcap-${TAG_NAME}.dmg"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Postcap-${{ github.ref_name }}.dmg
+          generate_release_notes: true
