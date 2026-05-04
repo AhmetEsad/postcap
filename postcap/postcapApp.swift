@@ -8,10 +8,13 @@
 import SwiftUI
 
 @main
-struct postcapApp: App {
+struct PostcapApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+        }
+        .commands {
+            CommandGroup(replacing: .newItem) {}
         }
     }
 }
