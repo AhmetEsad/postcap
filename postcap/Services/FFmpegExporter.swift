@@ -118,18 +118,25 @@ final class FFmpegExporter: ObservableObject {
             return
         }
 
+        let hasMultipleTracks = keptTracks.count > 1
         let hasVolumeChanges = keptTracks.contains {
             abs(request.audioSettings[$0.index, default: AudioTrackSettings()].volume - 1) > 0.001
         }
 
-        if hasVolumeChanges {
-            let filters = keptTracks.map { track in
+        if hasMultipleTracks {
+            let filters = keptTracks.enumerated().map { offset, track in
                 let volume = request.audioSettings[track.index, default: AudioTrackSettings()].volume
-                return "[0:a:\(track.index)]volume=\(formatVolume(volume))[a\(track.index)]"
+                return "[0:a:\(track.index)]volume=\(formatVolume(volume))[a\(offset)]"
             }
-            arguments += ["-filter_complex", filters.joined(separator: ";")]
-            keptTracks.forEach { arguments += ["-map", "[a\($0.index)]"] }
-            arguments += ["-c:a", "aac"]
+            let inputs = keptTracks.indices.map { "[a\($0)]" }.joined()
+            let mix = "\(inputs)amix=inputs=\(keptTracks.count):duration=longest:dropout_transition=0:normalize=0[aout]"
+            arguments += ["-filter_complex", (filters + [mix]).joined(separator: ";")]
+            arguments += ["-map", "[aout]", "-c:a", "aac"]
+        } else if hasVolumeChanges, let track = keptTracks.first {
+            let volume = request.audioSettings[track.index, default: AudioTrackSettings()].volume
+            let filter = "[0:a:\(track.index)]volume=\(formatVolume(volume))[aout]"
+            arguments += ["-filter_complex", filter]
+            arguments += ["-map", "[aout]", "-c:a", "aac"]
         } else {
             keptTracks.forEach { arguments += ["-map", "0:a:\($0.index)?"] }
             arguments += ["-c:a", "copy"]
