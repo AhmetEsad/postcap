@@ -18,6 +18,7 @@ xcodebuild \
   -scheme postcap \
   -configuration Release \
   -derivedDataPath "$BUILD_DIR" \
+  CODE_SIGNING_ALLOWED=NO \
   build
 
 echo "finding developer id signing identity..."
