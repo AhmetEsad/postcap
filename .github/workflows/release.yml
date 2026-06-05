@@ -56,7 +56,12 @@ jobs:
 
       - name: Rename artifact
         run: |
-          TAG_NAME="${GITHUB_REF_NAME:-manual-test}"
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="manual-${GITHUB_RUN_NUMBER}"
+          fi
+
           mv dist/Postcap.dmg "dist/Postcap-${TAG_NAME}.dmg"
 
       - name: Notarize DMG
@@ -65,24 +70,100 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: |
-          TAG_NAME="${GITHUB_REF_NAME:-manual-test}"
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="manual-${GITHUB_RUN_NUMBER}"
+          fi
 
-          xcrun notarytool submit "dist/Postcap-${TAG_NAME}.dmg" \
-            --apple-id "$APPLE_ID" \
-            --team-id "$APPLE_TEAM_ID" \
-            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-            --wait
+          DMG_PATH="dist/Postcap-${TAG_NAME}.dmg"
+
+          echo "Submitting $DMG_PATH for notarization..."
+
+          SUBMISSION_JSON="$(
+            xcrun notarytool submit "$DMG_PATH" \
+              --apple-id "$APPLE_ID" \
+              --team-id "$APPLE_TEAM_ID" \
+              --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+              --output-format json
+          )"
+
+          echo "$SUBMISSION_JSON"
+
+          SUBMISSION_ID="$(
+            echo "$SUBMISSION_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])'
+          )"
+
+          echo "Submission ID: $SUBMISSION_ID"
+
+          for i in {1..180}; do
+            echo "Checking notarization status, attempt $i..."
+
+            set +e
+            STATUS_JSON="$(
+              xcrun notarytool info "$SUBMISSION_ID" \
+                --apple-id "$APPLE_ID" \
+                --team-id "$APPLE_TEAM_ID" \
+                --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+                --output-format json
+            )"
+            EXIT_CODE=$?
+            set -e
+
+            if [[ $EXIT_CODE -ne 0 ]]; then
+              echo "Status check failed, likely transient Apple/GitHub network issue."
+              echo "Retrying in 60 seconds..."
+              sleep 60
+              continue
+            fi
+
+            echo "$STATUS_JSON"
+
+            STATUS="$(
+              echo "$STATUS_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])'
+            )"
+
+            if [[ "$STATUS" == "Accepted" ]]; then
+              echo "Notarization accepted."
+              exit 0
+            fi
+
+            if [[ "$STATUS" == "Invalid" ]]; then
+              echo "Notarization invalid. Fetching log..."
+
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --apple-id "$APPLE_ID" \
+                --team-id "$APPLE_TEAM_ID" \
+                --password "$APPLE_APP_SPECIFIC_PASSWORD"
+
+              exit 1
+            fi
+
+            echo "Current status: $STATUS"
+            sleep 60
+          done
+
+          echo "Timed out waiting for notarization."
+          exit 1
 
       - name: Staple notarization ticket
         run: |
-          TAG_NAME="${GITHUB_REF_NAME:-manual-test}"
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="manual-${GITHUB_RUN_NUMBER}"
+          fi
 
           xcrun stapler staple "dist/Postcap-${TAG_NAME}.dmg"
           xcrun stapler validate "dist/Postcap-${TAG_NAME}.dmg"
 
       - name: Verify DMG
         run: |
-          TAG_NAME="${GITHUB_REF_NAME:-manual-test}"
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG_NAME="${GITHUB_REF_NAME}"
+          else
+            TAG_NAME="manual-${GITHUB_RUN_NUMBER}"
+          fi
 
           spctl -a -vvv -t open --context context:primary-signature "dist/Postcap-${TAG_NAME}.dmg"
 
