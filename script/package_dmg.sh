@@ -11,6 +11,8 @@ DMG_PATH="$DIST_DIR/Postcap.dmg"
 
 cd "$ROOT_DIR"
 
+echo "building postcap..."
+
 xcodebuild \
   -project postcap.xcodeproj \
   -scheme postcap \
@@ -18,11 +20,48 @@ xcodebuild \
   -derivedDataPath "$BUILD_DIR" \
   build
 
-codesign --force --deep --sign - "$APP_PATH"
+echo "finding developer id signing identity..."
+
+CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-}"
+
+if [[ -z "$CODESIGN_IDENTITY" ]]; then
+  CODESIGN_IDENTITY="$(
+    security find-identity -v -p codesigning \
+      | grep "Developer ID Application" \
+      | head -n 1 \
+      | sed -E 's/.*"(.+)"/\1/'
+  )"
+fi
+
+if [[ -z "$CODESIGN_IDENTITY" ]]; then
+  echo "error: no Developer ID Application signing identity found."
+  echo "available signing identities:"
+  security find-identity -v -p codesigning || true
+  exit 1
+fi
+
+echo "using signing identity: $CODESIGN_IDENTITY"
+
+echo "signing app..."
+
+codesign \
+  --force \
+  --deep \
+  --options runtime \
+  --timestamp \
+  --sign "$CODESIGN_IDENTITY" \
+  "$APP_PATH"
+
+echo "verifying app signature..."
+
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+spctl -a -vvv -t exec "$APP_PATH" || true
+
+echo "creating dmg..."
 
 rm -rf "$STAGING_DIR" "$DMG_PATH"
 mkdir -p "$STAGING_DIR"
+
 cp -R "$APP_PATH" "$STAGING_DIR/"
 ln -s /Applications "$STAGING_DIR/Applications"
 
@@ -33,4 +72,17 @@ hdiutil create \
   -format UDZO \
   "$DMG_PATH"
 
-echo "Created $DMG_PATH"
+echo "signing dmg..."
+
+codesign \
+  --force \
+  --timestamp \
+  --sign "$CODESIGN_IDENTITY" \
+  "$DMG_PATH"
+
+echo "verifying dmg signature..."
+
+codesign --verify --verbose=2 "$DMG_PATH"
+spctl -a -vvv -t open --context context:primary-signature "$DMG_PATH" || true
+
+echo "created $DMG_PATH"

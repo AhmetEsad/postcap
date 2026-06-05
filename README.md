@@ -1,5 +1,7 @@
 # Postcap
 
+[![Release](https://github.com/AhmetEsad/postcap/actions/workflows/release.yml/badge.svg)](https://github.com/AhmetEsad/postcap/actions/workflows/release.yml)
+
 Postcap is a lightweight native macOS app for post-capture editing: trimming, cropping, cleaning up audio tracks, and exporting videos with ffmpeg.
 
 ![Postcap](screenshots/postcap.png)
@@ -32,10 +34,6 @@ brew install ffmpeg
 Download Postcap, drag it to Applications, and open it.
 
 ![Install Postcap](screenshots/install.gif)
-
-If you use an unsigned release build, macOS may show an "Unverified Developer" warning. Open **System Settings > Privacy & Security** and choose **Open Anyway** for Postcap. I don't currently have an Apple Developer license and this is expected for builds that are signed locally or ad hoc instead of notarized with an Apple Developer account.
-
-![Install Postcap](screenshots/open_anyway.gif)
 
 For development, open `postcap.xcodeproj` in Xcode and run the `postcap` scheme.
 

@@ -1,6 +1,7 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -10,8 +11,9 @@ permissions:
 
 jobs:
   build-release:
-    name: Build DMG
+    name: Build, sign, notarize DMG
     runs-on: macos-26
+    environment: releases
 
     steps:
       - name: Check out repository
@@ -20,16 +22,73 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
+      - name: Import Developer ID certificate
+        env:
+          MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$MACOS_CERTIFICATE_BASE64" | base64 --decode > certificate.p12 || \
+          echo "$MACOS_CERTIFICATE_BASE64" | base64 -D > certificate.p12
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+
+          security import certificate.p12 \
+            -k build.keychain \
+            -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security \
+            -T /usr/bin/productsign
+
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s \
+            -k "$KEYCHAIN_PASSWORD" \
+            build.keychain
+
+          security find-identity -v -p codesigning
+
       - name: Build and package DMG
         run: script/package_dmg.sh
 
       - name: Rename artifact
         run: |
-          TAG_NAME="${GITHUB_REF_NAME}"
+          TAG_NAME="${GITHUB_REF_NAME:-manual-test}"
           mv dist/Postcap.dmg "dist/Postcap-${TAG_NAME}.dmg"
 
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME:-manual-test}"
+
+          xcrun notarytool submit "dist/Postcap-${TAG_NAME}.dmg" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --wait
+
+      - name: Staple notarization ticket
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME:-manual-test}"
+
+          xcrun stapler staple "dist/Postcap-${TAG_NAME}.dmg"
+          xcrun stapler validate "dist/Postcap-${TAG_NAME}.dmg"
+
+      - name: Verify DMG
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME:-manual-test}"
+
+          spctl -a -vvv -t open --context context:primary-signature "dist/Postcap-${TAG_NAME}.dmg"
+
       - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/Postcap-${{ github.ref_name }}.dmg
-          generate_release_notes: true
+          body_path: releases/${{ github.ref_name }}.md
