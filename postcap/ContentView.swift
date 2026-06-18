@@ -59,9 +59,9 @@ private struct WorkspaceView: View {
                             }
                     } else {
                         ContentUnavailableView(
-                            "Drop Video",
+                            "Welcome to Postcap!",
                             systemImage: "film",
-                            description: Text("Import a screen recording to trim, crop, clean up, and export.")
+                            description: Text("Import a recording to begin.")
                         )
                     }
 
