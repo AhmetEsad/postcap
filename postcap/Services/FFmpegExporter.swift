@@ -4,6 +4,7 @@ import Foundation
 enum FFmpegExporterError: LocalizedError {
     case unsupportedEncoder(String)
     case invalidTrim
+    case invalidSpeed
     case failed(Int32, String)
     case cancelled
 
@@ -13,6 +14,8 @@ enum FFmpegExporterError: LocalizedError {
             "Unsupported encoder: \(encoder)."
         case .invalidTrim:
             "Trim end time must be greater than trim start time."
+        case .invalidSpeed:
+            "Export speed must be greater than zero."
         case .failed(let code, let message):
             "ffmpeg failed with exit code \(code): \(message)"
         case .cancelled:
@@ -67,6 +70,9 @@ final class FFmpegExporter: ObservableObject {
         if request.trim.enabled, request.trim.end > 0, request.trim.end <= request.trim.start {
             throw FFmpegExporterError.invalidTrim
         }
+        guard request.speed.isFinite, request.speed > 0 else {
+            throw FFmpegExporterError.invalidSpeed
+        }
 
         var arguments: [String] = ["-hide_banner", "-nostdin"]
 
@@ -84,8 +90,15 @@ final class FFmpegExporter: ObservableObject {
             }
         }
 
+        var videoFilters: [String] = []
         if request.crop.enabled {
-            arguments += ["-vf", "crop=\(request.crop.width):\(request.crop.height):\(request.crop.x):\(request.crop.y)"]
+            videoFilters.append("crop=\(request.crop.width):\(request.crop.height):\(request.crop.x):\(request.crop.y)")
+        }
+        if hasSpeedAdjustment(request) {
+            videoFilters.append("setpts=PTS/\(formatSpeed(request.speed))")
+        }
+        if !videoFilters.isEmpty {
+            arguments += ["-vf", videoFilters.joined(separator: ",")]
         }
 
         arguments += ["-map", "0:v:0", "-c:v", request.encoder.rawValue]
@@ -122,19 +135,22 @@ final class FFmpegExporter: ObservableObject {
         let hasVolumeChanges = keptTracks.contains {
             abs(request.audioSettings[$0.index, default: AudioTrackSettings()].volume - 1) > 0.001
         }
+        let hasSpeedAdjustment = hasSpeedAdjustment(request)
 
         if hasMultipleTracks {
             let filters = keptTracks.enumerated().map { offset, track in
                 let volume = request.audioSettings[track.index, default: AudioTrackSettings()].volume
-                return "[0:a:\(track.index)]volume=\(formatVolume(volume))[a\(offset)]"
+                let chain = (["volume=\(formatVolume(volume))"] + audioTempoFilters(for: request.speed)).joined(separator: ",")
+                return "[0:a:\(track.index)]\(chain)[a\(offset)]"
             }
             let inputs = keptTracks.indices.map { "[a\($0)]" }.joined()
             let mix = "\(inputs)amix=inputs=\(keptTracks.count):duration=longest:dropout_transition=0:normalize=0[aout]"
             arguments += ["-filter_complex", (filters + [mix]).joined(separator: ";")]
             arguments += ["-map", "[aout]", "-c:a", "aac"]
-        } else if hasVolumeChanges, let track = keptTracks.first {
+        } else if (hasVolumeChanges || hasSpeedAdjustment), let track = keptTracks.first {
             let volume = request.audioSettings[track.index, default: AudioTrackSettings()].volume
-            let filter = "[0:a:\(track.index)]volume=\(formatVolume(volume))[aout]"
+            let chain = (["volume=\(formatVolume(volume))"] + audioTempoFilters(for: request.speed)).joined(separator: ",")
+            let filter = "[0:a:\(track.index)]\(chain)[aout]"
             arguments += ["-filter_complex", filter]
             arguments += ["-map", "[aout]", "-c:a", "aac"]
         } else {
@@ -334,11 +350,41 @@ final class FFmpegExporter: ObservableObject {
     }
 
     private func exportDuration(for request: ExportRequest) -> Double {
-        guard request.trim.enabled else { return request.videoInfo.duration }
-        if request.trim.end > request.trim.start {
-            return request.trim.end - request.trim.start
+        let sourceDuration: Double
+        if !request.trim.enabled {
+            sourceDuration = request.videoInfo.duration
+        } else if request.trim.end > request.trim.start {
+            sourceDuration = request.trim.end - request.trim.start
+        } else {
+            sourceDuration = max(request.videoInfo.duration - request.trim.start, 0)
         }
-        return max(request.videoInfo.duration - request.trim.start, 0)
+
+        return sourceDuration / max(request.speed, 0.001)
+    }
+
+    private func hasSpeedAdjustment(_ request: ExportRequest) -> Bool {
+        abs(request.speed - 1) > 0.001
+    }
+
+    private func audioTempoFilters(for speed: Double) -> [String] {
+        guard abs(speed - 1) > 0.001 else { return [] }
+
+        var remaining = speed
+        var factors: [Double] = []
+
+        while remaining > 2 {
+            factors.append(2)
+            remaining /= 2
+        }
+        while remaining < 0.5 {
+            factors.append(0.5)
+            remaining /= 0.5
+        }
+        if abs(remaining - 1) > 0.001 {
+            factors.append(remaining)
+        }
+
+        return factors.map { "atempo=\(formatSpeed($0))" }
     }
 
     private func formatSeconds(_ value: Double) -> String {
@@ -346,6 +392,10 @@ final class FFmpegExporter: ObservableObject {
     }
 
     private func formatVolume(_ value: Double) -> String {
+        String(format: "%.3f", value)
+    }
+
+    private func formatSpeed(_ value: Double) -> String {
         String(format: "%.3f", value)
     }
 }

@@ -16,6 +16,7 @@ final class AppModel: ObservableObject {
     @Published var audioSettings: [Int: AudioTrackSettings] = [:]
     @Published var encoder: VideoEncoder = .h264VideoToolbox
     @Published var bitrate = ""
+    @Published var exportSpeed = 1.0
     @Published var errorMessage: String?
     @Published var availableEncoders: Set<VideoEncoder> = []
     @Published var isAnalyzing = false
@@ -75,6 +76,7 @@ final class AppModel: ObservableObject {
             outputURL = defaultOutputURL(for: url, encoder: encoder)
             crop = CropSettings(x: 0, y: 0, width: info.width, height: info.height, enabled: false)
             trim = TrimSettings(start: 0, end: info.duration, enabled: false)
+            exportSpeed = 1
             audioSettings = Dictionary(uniqueKeysWithValues: info.audioTracks.map { ($0.index, AudioTrackSettings()) })
             waveforms = [:]
             playbackSeconds = 0
@@ -119,6 +121,7 @@ final class AppModel: ObservableObject {
             videoInfo: videoInfo,
             encoder: encoder,
             bitrate: bitrate,
+            speed: exportSpeed,
             crop: crop,
             trim: trim,
             audioSettings: audioSettings

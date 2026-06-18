@@ -81,6 +81,7 @@ struct ExportRequest: Equatable {
     var videoInfo: VideoInfo
     var encoder: VideoEncoder
     var bitrate: String
+    var speed: Double
     var crop: CropSettings
     var trim: TrimSettings
     var audioSettings: [Int: AudioTrackSettings]

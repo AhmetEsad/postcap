@@ -110,7 +110,7 @@ private struct ImportSection: View {
                         Text("\(info.width)x\(info.height) • \(Formatters.duration(info.duration)) • \(info.videoCodec) • \(Formatters.bitrate(info.bitrate))")
                             .foregroundStyle(.secondary)
             } else {
-                        Text("Import or drag a screen recording into the preview.")
+                        Text("Import or drag a recording into the preview.")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -159,6 +159,7 @@ private struct VideoSettingsSection: View {
 
             Divider()
 
+
             Toggle("Crop", isOn: $model.crop.enabled)
 
             if model.crop.enabled {
@@ -181,11 +182,43 @@ private struct VideoSettingsSection: View {
                     .padding(.top, 8)
                 }
             }
+            Divider()
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Export speed")
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Slider(value: speedSliderBinding, in: 0.25...4)
+
+                    TextField("Speed", value: speedBinding, format: .number.precision(.fractionLength(2)))
+                        .textFieldStyle(.roundedBorder)
+                        .monospacedDigit()
+                        .frame(width: 64)
+
+                    Text("x")
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
     }
 
     private var x2: Int {
         model.crop.x + model.crop.width
+    }
+
+    private var speedBinding: Binding<Double> {
+        Binding(
+            get: { model.exportSpeed },
+            set: { model.exportSpeed = $0 }
+        )
+    }
+
+    private var speedSliderBinding: Binding<Double> {
+        Binding(
+            get: { min(max(model.exportSpeed, 0.25), 4) },
+            set: { model.exportSpeed = ($0 * 20).rounded() / 20 }
+        )
     }
 
     private var y2: Int {
