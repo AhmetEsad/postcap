@@ -452,6 +452,10 @@ private struct WaveformSettingsSection: View {
             SectionView(title: "Export") {
                 Toggle("Open destination folder after export", isOn: $model.openDestinationFolderAfterExport)
             }
+
+            SectionView(title: "Feedback") {
+                Toggle("Enable haptic feedback", isOn: $model.hapticFeedbackEnabled)
+            }
         }
     }
 }

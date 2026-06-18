@@ -32,6 +32,7 @@ final class AppModel: ObservableObject {
     @AppStorage("autoGenerateWaveformsUnderMinutes") var autoGenerateWaveformsUnderMinutes = 3
     @AppStorage("waveformColorHex") var waveformColorHex = "FFFFFF"
     @AppStorage("openDestinationFolderAfterExport") var openDestinationFolderAfterExport = false
+    @AppStorage("hapticFeedbackEnabled") var hapticFeedbackEnabled = true
 
     let pathsStore = FFmpegPathsStore()
     let exporter = FFmpegExporter()
@@ -134,6 +135,7 @@ final class AppModel: ObservableObject {
             do {
                 errorMessage = nil
                 try await exporter.export(request, ffmpegPath: pathsStore.ffmpegPath)
+                HapticManager.shared.exportCompleted()
                 exportCompletionMessage = "Export finished: \(outputURL.lastPathComponent)"
                 if openDestinationFolderAfterExport {
                     NSWorkspace.shared.activateFileViewerSelecting([outputURL])
