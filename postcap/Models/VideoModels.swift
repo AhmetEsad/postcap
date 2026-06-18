@@ -36,6 +36,12 @@ struct TrimSettings: Equatable {
     var enabled: Bool = false
 }
 
+struct OutputSizeSettings: Equatable {
+    var width: Int = 0
+    var height: Int = 0
+    var enabled: Bool = false
+}
+
 enum VideoEncoder: String, CaseIterable, Identifiable {
     case h264VideoToolbox = "h264_videotoolbox"
     case hevcVideoToolbox = "hevc_videotoolbox"
@@ -83,6 +89,7 @@ struct ExportRequest: Equatable {
     var bitrate: String
     var speed: Double
     var crop: CropSettings
+    var outputSize: OutputSizeSettings
     var trim: TrimSettings
     var audioSettings: [Int: AudioTrackSettings]
 }

@@ -184,6 +184,28 @@ private struct VideoSettingsSection: View {
             }
             Divider()
 
+            Toggle("Resize output", isOn: $model.outputSize.enabled)
+
+            if model.outputSize.enabled {
+                HStack(alignment: .bottom, spacing: 8) {
+                    IntegerField(title: "Width", value: $model.outputSize.width)
+                    Text("x")
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, 7)
+                    IntegerField(title: "Height", value: $model.outputSize.height)
+
+                    Button {
+                        model.resetOutputSize()
+                    } label: {
+                        Image(systemName: "arrow.counterclockwise")
+                    }
+                    .buttonStyle(.bordered)
+                    .help("Use the current crop or source dimensions")
+                }
+            }
+
+            Divider()
+
             VStack(alignment: .leading, spacing: 6) {
                 Text("Export speed")
                     .foregroundStyle(.secondary)
@@ -449,6 +471,25 @@ private struct NumberField: View {
                 .frame(width: 90)
                 .onChange(of: value) { _, newValue in
                     value = min(max(newValue, range.lowerBound), range.upperBound)
+                }
+        }
+    }
+}
+
+private struct IntegerField: View {
+    var title: String
+    @Binding var value: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .foregroundStyle(.secondary)
+            TextField(title, value: $value, format: .number)
+                .textFieldStyle(.roundedBorder)
+                .monospacedDigit()
+                .frame(width: 96)
+                .onChange(of: value) { _, newValue in
+                    value = max(newValue, 1)
                 }
         }
     }

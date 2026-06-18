@@ -12,6 +12,7 @@ final class AppModel: ObservableObject {
     @Published var player: AVPlayer?
     @Published var videoInfo: VideoInfo?
     @Published var crop = CropSettings()
+    @Published var outputSize = OutputSizeSettings()
     @Published var trim = TrimSettings()
     @Published var audioSettings: [Int: AudioTrackSettings] = [:]
     @Published var encoder: VideoEncoder = .h264VideoToolbox
@@ -75,6 +76,7 @@ final class AppModel: ObservableObject {
             videoInfo = info
             outputURL = defaultOutputURL(for: url, encoder: encoder)
             crop = CropSettings(x: 0, y: 0, width: info.width, height: info.height, enabled: false)
+            outputSize = OutputSizeSettings(width: info.width, height: info.height, enabled: false)
             trim = TrimSettings(start: 0, end: info.duration, enabled: false)
             exportSpeed = 1
             audioSettings = Dictionary(uniqueKeysWithValues: info.audioTracks.map { ($0.index, AudioTrackSettings()) })
@@ -123,6 +125,7 @@ final class AppModel: ObservableObject {
             bitrate: bitrate,
             speed: exportSpeed,
             crop: crop,
+            outputSize: outputSize,
             trim: trim,
             audioSettings: audioSettings
         )
@@ -274,6 +277,12 @@ final class AppModel: ObservableObject {
             let height = min(videoInfo.height, Int(Double(width) * 9 / 16))
             crop = CropSettings(x: 0, y: (videoInfo.height - height) / 2, width: width, height: height, enabled: true)
         }
+    }
+
+    func resetOutputSize() {
+        guard let videoInfo else { return }
+        outputSize.width = crop.enabled ? crop.width : videoInfo.width
+        outputSize.height = crop.enabled ? crop.height : videoInfo.height
     }
 
     private func shouldAutoGenerateWaveforms(for info: VideoInfo) -> Bool {

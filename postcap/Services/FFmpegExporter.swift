@@ -5,6 +5,7 @@ enum FFmpegExporterError: LocalizedError {
     case unsupportedEncoder(String)
     case invalidTrim
     case invalidSpeed
+    case invalidOutputSize
     case failed(Int32, String)
     case cancelled
 
@@ -16,6 +17,8 @@ enum FFmpegExporterError: LocalizedError {
             "Trim end time must be greater than trim start time."
         case .invalidSpeed:
             "Export speed must be greater than zero."
+        case .invalidOutputSize:
+            "Output width and height must be greater than zero."
         case .failed(let code, let message):
             "ffmpeg failed with exit code \(code): \(message)"
         case .cancelled:
@@ -73,6 +76,9 @@ final class FFmpegExporter: ObservableObject {
         guard request.speed.isFinite, request.speed > 0 else {
             throw FFmpegExporterError.invalidSpeed
         }
+        if request.outputSize.enabled, request.outputSize.width <= 0 || request.outputSize.height <= 0 {
+            throw FFmpegExporterError.invalidOutputSize
+        }
 
         var arguments: [String] = ["-hide_banner", "-nostdin"]
 
@@ -93,6 +99,9 @@ final class FFmpegExporter: ObservableObject {
         var videoFilters: [String] = []
         if request.crop.enabled {
             videoFilters.append("crop=\(request.crop.width):\(request.crop.height):\(request.crop.x):\(request.crop.y)")
+        }
+        if request.outputSize.enabled {
+            videoFilters.append("scale=\(request.outputSize.width):\(request.outputSize.height):flags=lanczos")
         }
         if hasSpeedAdjustment(request) {
             videoFilters.append("setpts=PTS/\(formatSpeed(request.speed))")
