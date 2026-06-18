@@ -210,7 +210,7 @@ private struct VideoSettingsSection: View {
                     .foregroundStyle(.secondary)
 
                 HStack {
-                    Slider(value: speedSliderBinding, in: 0.25...4)
+                    HapticSlider(value: speedSliderBinding, range: 0.25...4)
 
                     TextField("Speed", value: speedBinding, format: .number.precision(.fractionLength(2)))
                         .textFieldStyle(.roundedBorder)
@@ -515,7 +515,10 @@ private struct CropControlRow: View {
                     .frame(width: 96)
             }
 
-            Slider(value: sliderBinding, in: Double(range.lowerBound)...Double(range.upperBound))
+            HapticSlider(
+                value: sliderBinding,
+                range: Double(range.lowerBound)...Double(range.upperBound)
+            )
         }
     }
 

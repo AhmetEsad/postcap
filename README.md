@@ -2,13 +2,13 @@
 
 [![Release](https://github.com/AhmetEsad/postcap/actions/workflows/release.yml/badge.svg)](https://github.com/AhmetEsad/postcap/actions/workflows/release.yml)
 
-Postcap is a lightweight native macOS app for post-capture editing: trimming, cropping, cleaning up audio tracks, and exporting videos with ffmpeg.
+Postcap is a lightweight native macOS app for turning raw screen recordings into shareable clips: trim, crop, resize, adjust playback speed, clean up audio tracks, and export with ffmpeg.
 
 ![Postcap](screenshots/postcap.png)
 
 It exists because the built-in macOS screen recorder has excellent region capture, but does not capture system audio or separate audio tracks. OBS has powerful audio and source control, but it is often annoying for quick region-focused clips and usually still needs post-processing. Full editors like Premiere are overkill when I just want to trim a recording, crop to the important part, fix the audio, and export.
 
-With Postcap, you can simply import a video, trim it, crop to the important region, mute/remove/adjust individual audio tracks such as mic vs system audio, then export H.264 or H.265 through ffmpeg. Hardware-accelerated VideoToolbox encoders are used when available.
+With Postcap, you can import a video, trim it, crop to the important region, resize the output, adjust its speed, mute/remove/adjust individual audio tracks such as mic vs system audio, then export through ffmpeg. Hardware-accelerated VideoToolbox encoders are available when supported by the installed ffmpeg build.
 
 ## Requirements
 
@@ -31,7 +31,7 @@ Install ffmpeg with Homebrew:
 brew install ffmpeg
 ```
 
-Download Postcap, drag it to Applications, and open it.
+Download the latest release DMG from [Releases](https://github.com/AhmetEsad/postcap/releases), then drag Postcap to Applications.
 
 ![Install Postcap](screenshots/install.gif)
 
@@ -40,11 +40,14 @@ For development, open `postcap.xcodeproj` in Xcode and run the `postcap` scheme.
 ## Features
 
 - Import video files and inspect duration, dimensions, codecs, bitrate, and audio tracks with `ffprobe`
-- Trim/cut by start and end time
+- Trim with timeline markers, player controls, or `I`/`O` keyboard shortcuts
 - Crop to region with a visual crop overlay
+- Resize exported video
+- Speed up or slow down exports while preserving audio pitch
 - Show per-track audio waveforms in the timeline
 - Generate waveforms automatically for short videos or manually from settings
 - Include, remove, mute, or adjust volume for individual audio tracks
+- Mix selected audio tracks into one output track for compatibility with messaging and social platforms
 - Export with available ffmpeg encoders, including VideoToolbox, ProRes, and software encoders when present in the local ffmpeg build
 
 ## Usage
@@ -52,17 +55,25 @@ For development, open `postcap.xcodeproj` in Xcode and run the `postcap` scheme.
 1. Launch Postcap.
 2. Confirm `ffmpeg` and `ffprobe` paths are valid, or choose them manually.
 3. Import a recording or drag it into the main preview.
-4. Set trim, crop, encoder, bitrate, and audio track options.
+4. Set trim, crop, output size, speed, encoder, bitrate, and audio track options.
 5. Choose an output path.
 6. Export.
 
-When audio volume is unchanged, Postcap copies audio tracks. When any kept track has a volume adjustment, Postcap filters kept tracks and encodes them as AAC.
+When one unchanged audio track is selected, Postcap can copy it directly. Multiple selected tracks are volume-adjusted as configured, mixed together, and exported as a single AAC track.
+
+Trim shortcuts:
+
+- `I`: set trim start to the playhead
+- `O`: set trim end to the playhead
+- `Shift-I`: go to trim start
+- `Shift-O`: go to trim end
 
 ## Development
 
 - `Services/FFmpegPathsStore.swift` detects and persists binary paths.
 - `Services/VideoAnalyzer.swift` calls `ffprobe` and parses JSON.
 - `Services/FFmpegExporter.swift` builds ffmpeg argument arrays, runs `Process` and parses progress.
+- `Services/HapticManager.swift` owns optional native haptic feedback.
 - `Stores/AppModel.swift` owns editor state.
 - `Views/` contains the SwiftUI editor.
 
@@ -88,7 +99,7 @@ script/package_dmg.sh
 
 This creates `dist/Postcap.dmg`.
 
-Note: The script uses ad hoc signing (`codesign --sign -`) and does not notarize the app.
+The packaging script requires a Developer ID Application signing identity.
 
 ## License
 

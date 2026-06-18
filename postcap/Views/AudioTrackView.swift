@@ -38,7 +38,7 @@ struct AudioTrackView: View {
             HStack {
                 Image(systemName: "speaker.wave.1")
                     .foregroundStyle(.secondary)
-                Slider(value: $settings.volume, in: 0...2)
+                HapticSlider(value: $settings.volume, range: 0...2)
                     .disabled(!settings.isIncluded)
                 Text("\(Int(settings.volume * 100))%")
                     .monospacedDigit()

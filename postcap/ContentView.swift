@@ -310,12 +310,22 @@ private struct PlaybackControlsView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 48, alignment: .trailing)
 
-            Slider(
+            HapticSlider(
                 value: Binding(
                     get: { model.playbackSeconds },
-                    set: { model.seek(to: $0) }
+                    set: { newValue in
+                        let oldValue = model.playbackSeconds
+                        let range = 0...max(model.videoInfo?.duration ?? 0, 0.01)
+                        model.seek(to: newValue)
+                        HapticManager.shared.timelineScrubbed(
+                            from: oldValue,
+                            to: newValue,
+                            range: range,
+                            markers: model.trim.enabled ? [model.trim.start, model.trim.end] : []
+                        )
+                    }
                 ),
-                in: 0...max(model.videoInfo?.duration ?? 0, 0.01)
+                range: 0...max(model.videoInfo?.duration ?? 0, 0.01)
             )
             .disabled(model.player == nil)
 
