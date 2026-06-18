@@ -241,6 +241,29 @@ final class AppModel: ObservableObject {
         seek(to: playbackSeconds + delta)
     }
 
+    func setTrimStartToPlayhead() {
+        guard let videoInfo else { return }
+        trim.enabled = true
+        let end = trim.end > 0 ? trim.end : videoInfo.duration
+        trim.start = min(max(playbackSeconds, 0), max(end - 0.1, 0))
+    }
+
+    func setTrimEndToPlayhead() {
+        guard let videoInfo else { return }
+        trim.enabled = true
+        trim.end = min(max(playbackSeconds, trim.start + 0.1), videoInfo.duration)
+    }
+
+    func goToTrimStart() {
+        guard trim.enabled else { return }
+        seek(to: trim.start)
+    }
+
+    func goToTrimEnd() {
+        guard trim.enabled else { return }
+        seek(to: trim.end)
+    }
+
     private func installPlaybackObserver() {
         if let playbackTimeObserver, let observedPlayer {
             observedPlayer.removeTimeObserver(playbackTimeObserver)

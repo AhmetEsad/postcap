@@ -243,6 +243,24 @@ private struct PlaybackControlsView: View {
     var body: some View {
         HStack(spacing: 14) {
             Button {
+                model.setTrimStartToPlayhead()
+            } label: {
+                Image(systemName: "arrow.left.to.line")
+            }
+            .keyboardShortcut("i", modifiers: [])
+            .help("Set trim start to playhead (I)")
+            .disabled(model.player == nil)
+
+            Button {
+                model.goToTrimStart()
+            } label: {
+                Image(systemName: "backward.end.fill")
+            }
+            .keyboardShortcut("i", modifiers: .shift)
+            .help("Go to trim start (Shift-I)")
+            .disabled(model.player == nil || !model.trim.enabled)
+
+            Button {
                 model.skipPlayback(by: -10)
             } label: {
                 Image(systemName: "gobackward.10")
@@ -266,6 +284,24 @@ private struct PlaybackControlsView: View {
                 Image(systemName: "goforward.10")
             }
             .help("Forward 10 seconds")
+            .disabled(model.player == nil)
+
+            Button {
+                model.goToTrimEnd()
+            } label: {
+                Image(systemName: "forward.end.fill")
+            }
+            .keyboardShortcut("o", modifiers: .shift)
+            .help("Go to trim end (Shift-O)")
+            .disabled(model.player == nil || !model.trim.enabled)
+
+            Button {
+                model.setTrimEndToPlayhead()
+            } label: {
+                Image(systemName: "arrow.right.to.line")
+            }
+            .keyboardShortcut("o", modifiers: [])
+            .help("Set trim end to playhead (O)")
             .disabled(model.player == nil)
 
             Text(Formatters.duration(model.playbackSeconds))
@@ -486,40 +522,53 @@ private struct TimelineWaveformsView: View {
                     let labelWidth = 34.0
                     let rowSpacing = 10.0
                     let waveformWidth = max(proxy.size.width - labelWidth - rowSpacing, 320)
+                    let playheadX = labelWidth + rowSpacing + xPosition(
+                        for: model.playbackSeconds,
+                        duration: info.duration,
+                        width: waveformWidth
+                    )
 
-                    ScrollView(.vertical) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            TimelineTrimRuler(model: model, duration: info.duration)
-                                .padding(.leading, labelWidth + rowSpacing)
+                    ZStack(alignment: .topLeading) {
+                        ScrollView(.vertical) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                TimelineTrimRuler(model: model, duration: info.duration)
+                                    .padding(.leading, labelWidth + rowSpacing)
 
-                            ForEach(info.audioTracks) { track in
-                                HStack(spacing: rowSpacing) {
-                                    Text("A\(track.index + 1)")
-                                        .font(.caption)
-                                        .monospacedDigit()
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: labelWidth, alignment: .trailing)
+                                ForEach(info.audioTracks) { track in
+                                    HStack(spacing: rowSpacing) {
+                                        Text("A\(track.index + 1)")
+                                            .font(.caption)
+                                            .monospacedDigit()
+                                            .foregroundStyle(.secondary)
+                                            .frame(width: labelWidth, alignment: .trailing)
 
-                                    if let waveform = model.waveforms[track.index] {
-                                        AsyncImage(url: waveform.imageURL) { image in
-                                            image
-                                                .resizable(resizingMode: .stretch)
-                                                .interpolation(.medium)
-                                        } placeholder: {
-                                            Rectangle().fill(.quaternary)
-                                        }
-                                        .frame(width: waveformWidth, height: 34)
-                                        .clipShape(RoundedRectangle(cornerRadius: 5))
-                                    } else {
-                                        Rectangle()
-                                            .fill(.quaternary)
+                                        if let waveform = model.waveforms[track.index] {
+                                            AsyncImage(url: waveform.imageURL) { image in
+                                                image
+                                                    .resizable(resizingMode: .stretch)
+                                                    .interpolation(.medium)
+                                            } placeholder: {
+                                                Rectangle().fill(.quaternary)
+                                            }
                                             .frame(width: waveformWidth, height: 34)
                                             .clipShape(RoundedRectangle(cornerRadius: 5))
+                                        } else {
+                                            Rectangle()
+                                                .fill(.quaternary)
+                                                .frame(width: waveformWidth, height: 34)
+                                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                                        }
                                     }
                                 }
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Rectangle()
+                            .fill(.white.opacity(0.85))
+                            .frame(width: 1, height: proxy.size.height)
+                            .offset(x: playheadX)
+                            .allowsHitTesting(false)
                     }
                     .onAppear {
                         model.updateTimelineWaveformWidth(waveformWidth)
@@ -537,6 +586,11 @@ private struct TimelineWaveformsView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private func xPosition(for seconds: Double, duration: Double, width: Double) -> Double {
+        guard duration > 0 else { return 0 }
+        return min(max(seconds / duration, 0), 1) * width
     }
 }
 

@@ -159,7 +159,6 @@ private struct VideoSettingsSection: View {
 
             Divider()
 
-
             Toggle("Crop", isOn: $model.crop.enabled)
 
             if model.crop.enabled {
@@ -463,12 +462,12 @@ private struct NumberField: View {
     var range: ClosedRange<Double>
 
     var body: some View {
-        HStack {
+        VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .foregroundStyle(.secondary)
             TextField(title, value: $value, format: .number.precision(.fractionLength(2)))
                 .textFieldStyle(.roundedBorder)
-                .frame(width: 90)
+                .frame(minWidth: 80)
                 .onChange(of: value) { _, newValue in
                     value = min(max(newValue, range.lowerBound), range.upperBound)
                 }
