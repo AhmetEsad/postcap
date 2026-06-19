@@ -1,10 +1,33 @@
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0"
-    xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
         <title>Postcap Updates</title>
         <link>https://github.com/AhmetEsad/postcap</link>
         <description>Postcap release updates</description>
         <language>en</language>
+        <item>
+            <title>1.0.6</title>
+            <pubDate>Fri, 19 Jun 2026 10:55:33 +0000</pubDate>
+            <link>https://github.com/AhmetEsad/postcap/releases/tag/v1.0.6</link>
+            <sparkle:version>7</sparkle:version>
+            <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# Postcap v1.0.6
+
+Postcap can now keep itself up to date with Sparkle.
+
+## What's new
+
+- Added a native **Check for Updates…** command to the Postcap menu
+- Added an automatic update-check setting
+- Added signed Sparkle update metadata to the release pipeline
+
+## Details
+
+This is the first release that uses Sparkle, so it must be installed manually. Future releases can be installed from inside Postcap.
+]]></description>
+            <enclosure url="https://github.com/AhmetEsad/postcap/releases/download/v1.0.6/Postcap-v1.0.6.dmg" length="4149449" type="application/octet-stream" sparkle:edSignature="51Z4t8DM0xFS+FErBsCo5PHj5+wRtlh0LcczZmhM2nWskx8iFXuTdWcOF4qX4HZh7/rx9xOaRQA4kDXNSMlBAQ=="/>
+        </item>
     </channel>
 </rss>
