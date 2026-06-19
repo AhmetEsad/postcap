@@ -6,13 +6,30 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E3C641D02FE54DA4005364FD /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E3C641CF2FE54DA4005364FD /* Sparkle */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		E396CC1B2FA7A4F800634468 /* Postcap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postcap.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E3C641D12FE57000005364FD /* Exceptions for "postcap" folder in "postcap" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E396CC1A2FA7A4F800634468 /* postcap */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E396CC1D2FA7A4F800634468 /* postcap */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E3C641D12FE57000005364FD /* Exceptions for "postcap" folder in "postcap" target */,
+			);
 			path = postcap;
 			sourceTree = "<group>";
 		};
@@ -23,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E3C641D02FE54DA4005364FD /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +83,7 @@
 			);
 			name = postcap;
 			packageProductDependencies = (
+				E3C641CF2FE54DA4005364FD /* Sparkle */,
 			);
 			productName = Postcap;
 			productReference = E396CC1B2FA7A4F800634468 /* Postcap.app */;
@@ -94,6 +113,9 @@
 			);
 			mainGroup = E396CC122FA7A4F800634468;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E3C641CE2FE54DA4005364FD /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E396CC1C2FA7A4F800634468 /* Products */;
 			projectDirPath = "";
@@ -257,20 +279,18 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Postcap;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = postcap/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ahmetesaglam.postcap;
 				PRODUCT_NAME = Postcap;
 				REGISTER_APP_GROUPS = YES;
@@ -291,20 +311,18 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Postcap;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = postcap/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ahmetesaglam.postcap;
 				PRODUCT_NAME = Postcap;
 				REGISTER_APP_GROUPS = YES;
@@ -339,6 +357,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E3C641CE2FE54DA4005364FD /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E3C641CF2FE54DA4005364FD /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E3C641CE2FE54DA4005364FD /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E396CC132FA7A4F800634468 /* Project object */;
 }

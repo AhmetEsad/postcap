@@ -417,9 +417,27 @@ private struct FfmpegLogSection: View {
 
 private struct WaveformSettingsSection: View {
     @ObservedObject var model: AppModel
+    @EnvironmentObject private var updateManager: UpdateManager
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
+            SectionView(title: "Updates") {
+                Toggle(
+                    "Automatically check for updates",
+                    isOn: Binding(
+                        get: { updateManager.automaticallyChecksForUpdates },
+                        set: { updateManager.setAutomaticallyChecksForUpdates($0) }
+                    )
+                )
+
+                Button {
+                    updateManager.checkForUpdates()
+                } label: {
+                    Label("Check Now", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(!updateManager.canCheckForUpdates)
+            }
+
             SectionView(title: "Waveforms") {
                 Toggle("Auto-generate waveforms", isOn: $model.autoGenerateWaveforms)
 

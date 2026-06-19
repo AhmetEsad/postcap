@@ -49,6 +49,7 @@ For development, open `postcap.xcodeproj` in Xcode and run the `postcap` scheme.
 - Include, remove, mute, or adjust volume for individual audio tracks
 - Mix selected audio tracks into one output track for compatibility with messaging and social platforms
 - Export with available ffmpeg encoders, including VideoToolbox, ProRes, and software encoders when present in the local ffmpeg build
+- Update automatically
 
 ## Usage
 

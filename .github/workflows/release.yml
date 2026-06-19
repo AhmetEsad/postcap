@@ -167,9 +167,59 @@ jobs:
 
           spctl -a -vvv -t open --context context:primary-signature "dist/Postcap-${TAG_NAME}.dmg"
 
+      - name: Generate signed Sparkle appcast
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          SPARKLE_BIN="$GITHUB_WORKSPACE/.build/DerivedData/SourcePackages/artifacts/sparkle/Sparkle/bin"
+          APPCAST_DIR="$RUNNER_TEMP/postcap-appcast"
+          DMG_NAME="Postcap-${GITHUB_REF_NAME}.dmg"
+
+          test -n "$SPARKLE_PRIVATE_KEY"
+          test -x "$SPARKLE_BIN/generate_appcast"
+
+          mkdir -p "$APPCAST_DIR"
+          cp "dist/$DMG_NAME" "$APPCAST_DIR/$DMG_NAME"
+          cp appcast.xml "$APPCAST_DIR/appcast.xml"
+
+          if [[ -f "releases/${GITHUB_REF_NAME}.md" ]]; then
+            cp "releases/${GITHUB_REF_NAME}.md" "$APPCAST_DIR/Postcap-${GITHUB_REF_NAME}.md"
+          fi
+
+          printf '%s' "$SPARKLE_PRIVATE_KEY" | "$SPARKLE_BIN/generate_appcast" \
+            --ed-key-file - \
+            --download-url-prefix "https://github.com/AhmetEsad/postcap/releases/download/${GITHUB_REF_NAME}/" \
+            --link "https://github.com/AhmetEsad/postcap/releases/tag/${GITHUB_REF_NAME}" \
+            --embed-release-notes \
+            --maximum-versions 10 \
+            --maximum-deltas 0 \
+            "$APPCAST_DIR"
+
+          cp "$APPCAST_DIR/appcast.xml" "$RUNNER_TEMP/appcast.xml"
+
       - name: Create GitHub release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/Postcap-${{ github.ref_name }}.dmg
           body_path: releases/${{ github.ref_name }}.md
+
+      - name: Publish Sparkle appcast
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          git fetch origin main
+          git checkout -B appcast-update origin/main
+          cp "$RUNNER_TEMP/appcast.xml" appcast.xml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+
+          if git diff --cached --quiet; then
+            echo "Appcast is already current."
+            exit 0
+          fi
+
+          git commit -m "Update appcast for ${GITHUB_REF_NAME} [skip ci]"
+          git push origin HEAD:main
